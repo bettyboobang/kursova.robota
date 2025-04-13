@@ -1,4 +1,4 @@
-#ifndef D_INTERFACE.H
+#ifndef D_INTERFACE_H
 #define D_INTERFACE
 
 class dominosa_interface {

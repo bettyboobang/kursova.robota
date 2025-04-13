@@ -1,6 +1,6 @@
-//ToDO конструктор правильно ініціалізуючий конструктори поля
-//ToDO реалізація методів класу борд
-#include <board.h>
+//ToDO конструктор правильно ініціалізуючий конструктори поля +
+//ToDO реалізація методів класу борд +
+#include "board.h"
 
 board::board(const <vector<int>> &info) : grid(info) {
 	row = grid.size();//встановила кількість рядків на основі розміру вектора
@@ -12,11 +12,11 @@ board::board(const <vector<int>> &info) : grid(info) {
 }
 //метод кількості рядків 
 int board::get_r() const {
-	return row;
+	return rows;
 }
 //метод кількості стовпців
 int board::get_c() const {
-	return col;
+	return cols;
 }
 //метод значення клітикки
 int board::get_val(int row, int col) const {

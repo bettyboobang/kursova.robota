@@ -3,7 +3,7 @@
 //ToDO метод для вибору наступної непокритої клітини для доміно +
 //ToDO Розвязати головоломку через рекурсію +
 //ToDO Вивід головоломки на консоль +
-#include "solver.h"
+#include "solverdominosa.h"
 #include <iostream>
 #include <algorithm>
 #include <limits>
@@ -63,7 +63,7 @@ pair<int, int> super_solve:: grab_next_cell() {//метод для вибору 
 bool super_solve::super_solve_recurse() {//головоломку розвязуєм серез рекурсію
 	pair<int, int> next_cell = grab_next_cell();// тут ми отримуємо координати наступної вільної клітини
 	int i = next_cell.first;
-	inr j = next_cell.second;
+	int j = next_cell.second;
 	if(i == -1) {//розвязок знайдено якщо всі клітинки покриті
 		return true;
 	}

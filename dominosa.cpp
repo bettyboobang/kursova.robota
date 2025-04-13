@@ -15,8 +15,8 @@
 #include <memory> //для розумних вказівників
 using namespace std;
 
-int main() {
-	if(args != 2) {
+int main(int argc, char* argv[]) {
+	if(argc != 2) {
 		cerr << "Usage: " << argv[0] << " <input_file> " << endl;
 		return 1;
 	}
@@ -46,8 +46,8 @@ int main() {
         return 1; 
     }
     board board(grid);//створюється розумний вкказівник на обєкт классу солвер використовуючи інтерфейс 
-    unique_ptr <dominosa_interface> super_solver = make_unique <dominosa_interface>(board);
-    if(super_solver -> super_solve()) {//виклик методу розвязання головоломки
+    unique_ptr<dominosa_interface> super_solver = make_unique<dominosa_solve>(board);
+    if (super_solver->solve()) { //виклик методу розвязання головоломки
     	super_solver -> show_solution();
     } else {
     	cout << "No solution found." << endl;
