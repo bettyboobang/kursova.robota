@@ -14,6 +14,6 @@ public:
 	int get_r() const;
 	int get_c() const;
 	int get_val(int row, int col) const;
-	int is_val(int row, int col) const; 
+	bool is_val(int row, int col) const; 
 };
 #endif
