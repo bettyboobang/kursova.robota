@@ -2,8 +2,8 @@
 //ToDO костяк методів для кіль-сті рядів, кіль-сті стоіпців, отримання значення клітіни, превірка валідності координат +
 #ifndef BOARD_H
 #include <vector>
-using namespace std;
 #define BOARD_H
+using namespace std;
 
 class board {
 	vector<vector<int>> grid;
