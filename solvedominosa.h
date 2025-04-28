@@ -1,4 +1,5 @@
 #ifndef D_SOLVE_H
+
 #define D_SOLVE_H
 #include "dominosa.interface.h"
 #include "board.h"
@@ -31,4 +32,5 @@ public:
    void show_solution() const override;
    bool super_solve_recurse(); 
 };
+
 #endif

@@ -2,52 +2,83 @@
 //ToDO створення вектора для збереження даних ігр.поля
 //ToDO створити розумний вказівник
 //ToDO перероюити пррграму з вводом користувача
+//вирішила доддати функцію та бібліотеку для показу за скільки часу головоломка розвязлась
+//додоати перевірку вводу
 //main частина
-#include "dominosa.interface.h"
 #include "board.h"
 #include "solvedominosa.h"
 #include <iostream>
 #include <vector>
-#include <memory> //для розумних вказівників
 #include <sstream>
+#include <chrono>
 using namespace std;
 
-int main() {
-    int rows, cols;
-    cout << "Enter the number of rows: ";
-    cin >> rows;
-    cout << "Enter the number of columns: ";
-    cin >> cols;
-
-    if (rows <= 0 || cols <= 0) {
-        cerr << "Invalid board dimensions." << endl;
-        return 1;
+bool read_posint(const string &prompt, int &value) {//преревірка бо вводити можна тільки позитивні числа
+    string line;
+    while (true) {
+        cout << prompt;
+        if (!getline(cin, line)) return false;
+        stringstream ss(line);
+        if (ss >> value && ss.eof() && value > 0) {
+            return true;
+        }
+        cout << "Invalid input, please enter a positive integer." << endl;
     }
-
+}
+bool read_int(const string &prompt, int &value) {//прервірка чи ввів коримтувач ціле число
+    string line;
+    while (true) {
+        if (!prompt.empty()) cout << prompt;
+        if (!getline(cin, line)) return false;
+        stringstream ss(line);
+        if (ss >> value && ss.eof()) {
+            return true;
+        }
+        cout << "Invalid input, please enter an integer." << endl;
+    }
+}
+board read_board() {
+    int rows, cols;
+    read_posint("Enter the number of rows: ", rows);
+    read_posint("Enter the number of columns: ", cols);
+    if ((rows * cols) % 2 != 0) { // парна кіль-сть комірок
+        cerr << "Invalid board dimensions: The number of cells must be even." << endl;
+        exit(1);
+    }
     vector<vector<int>> grid(rows, vector<int>(cols));
-    cout << "Enter the board values row by row:" << endl;
+    cout << "Enter the board values row by row (each value separated by space):" << endl;
     for (int i = 0; i < rows; ++i) {
-        cout << "Row " << i + 1 << ": ";
+        cout << "Row " << (i + 1) << ": ";
         for (int j = 0; j < cols; ++j) {
-            cin >> grid[i][j];
+            read_int("", grid[i][j]);
         }
     }
+    return board(grid);
+}
 
-    board gameBoard(grid); // створення об'єкта дошки з введеними даними
-    cout << "Board created with " << gameBoard.get_r() << " rows and " << gameBoard.get_c() << " columns." << endl;
+int main() {
+    try {
+        board game_board = read_board();
+        cout << "\n";
+        game_board.print_board();  // гарний вивід початкового поля
 
-    unique_ptr<dominosa_interface> super_solver = make_unique<dominosa_solve>(gameBoard); // створення розв'язувача
-    cout << "Attempting to solve..." << endl;
+        auto start_time = chrono::high_resolution_clock::now(); // тут створюємо розв'язувач і починаємо розв'язання
+        dominosa_solve solver(game_board);
+        bool solved = solver.solve();
+        auto end_time = chrono::high_resolution_clock::now();
+        auto duration = chrono::duration_cast<chrono::milliseconds>(end_time - start_time).count();
+        cout << "\nTime taken: " << duration << " milliseconds" << endl;
 
-    bool solved = super_solver->solve(); // виклик розв'язання
+        if (solved) {
+            cout << "\nSolution found!" << endl;
+            solver.show_solution();
+        } else {
+            cout << "\nNo solution exists for this board." << endl;
+        }
 
-    cout << "Solution found: " << (solved ? "Yes" : "No") << endl;
-    if (solved) {
-        cout << "Showing solution:" << endl;
-        super_solver->show_solution(); // показ розв'язку якщо знайдений
-    } else {
-        cout << "No solution found." << endl;
+    } catch (const exception &e) {//килаємо ексепшон
+        cerr << "Error: " << e.what() << endl;
+        return 1;
     }
-
-    return 0; // завершення програми
+    return 0;
 }

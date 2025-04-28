@@ -1,4 +1,5 @@
 //треба додати попередню обробку, яка виявляє домінуючі пари, ці пари встановлюються перед початком рекурсивного розвязання
+//розвязувач
 #include "solvedominosa.h"
 #include <iostream>
 #include <algorithm>
@@ -10,7 +11,6 @@ using namespace std;
 pair<int, int> minmax(int a, int b) { //створення пари з мінімального і максимального значення для дпопомоги
     return {min(a, b), max(a, b)};
 }
-
 dominosa_solve::dominosa_solve(const board& b) : d_board(b) {//розвязувач з дошкою якак передається
     num_max = 0; //тут ми знаходимо максимальне число на нашій дошці для визначення набору доміно
     for (int i = 0; i < d_board.get_r(); ++i) {
@@ -28,8 +28,7 @@ void dominosa_solve::init_dominosa() {//ініціалізація набору 
     int rows = d_board.get_r();
     int cols = d_board.get_c();
     
-    // Перевірка валідності розміру дошки
-    if ((rows * cols) % 2 != 0) {
+    if ((rows * cols) % 2 != 0) {//валідність розміру дошки
         cerr << "Invalid board size: odd number of cells." << endl;
         exit(1);
     }
@@ -47,159 +46,161 @@ void dominosa_solve::init_dominosa() {//ініціалізація набору 
     }
     domino_available.clear();
     for (const auto& pair : domino_counts) {
-        domino_available[pair.first] = pair.second; // Встановлюємо реальну кількість
+        domino_available[pair.first] = pair.second; //встановимо реальну кількість
     }
 }
-bool dominosa_solve::super_solve_recurse() {
-    pair<int, int> next_cell = grab_next_cell();
-    int i = next_cell.first;
-    int j = next_cell.second;
-    
-    // Всі клітинки покриті, розв'язок знайдено
-    if (i == -1) {
-        cout << "All cells covered. Solution complete." << endl;
-        return true;
-    }
-    
-    // Розв'язок неможливий
-    if (i == -2) {
-        cout << "Solution impossible - isolated uncovered cell." << endl;
-        return false;
-    }
-    
-    int value_1 = d_board.get_val(i, j);
-    bool placed = false;
-    
-    // Спроба розмістити доміно у всіх чотирьох напрямках
-    
-    // Вправо
-    if (j + 1 < d_board.get_c() && !is_cover[i][j + 1]) {
-        int value_2 = d_board.get_val(i, j + 1);
-        pair<int, int> domino = minmax(value_1, value_2);
-        if (domino_available[domino] > 0) {
-            cout << "Trying horizontal right at (" << i << "," << j << ") and (" << i << "," << j+1 << ")" << endl;
-            is_cover[i][j] = true;
-            is_cover[i][j + 1] = true;
-            domino_available[domino]--;
-            find_solution.push_back({{i, j}, {i, j + 1}});
-            if (super_solve_recurse()) {
-                return true;
-            }
-            find_solution.pop_back();
-            domino_available[domino]++;
-            is_cover[i][j] = false;
-            is_cover[i][j + 1] = false;
-        }
-    }
-    
-    // Вниз
-    if (i + 1 < d_board.get_r() && !is_cover[i + 1][j]) {
-        int value_2 = d_board.get_val(i + 1, j); 
-        pair<int, int> domino = minmax(value_1, value_2);
-        if (domino_available[domino] > 0) {
-            cout << "Trying vertical down at (" << i << "," << j << ") and (" << i+1 << "," << j << ")" << endl;
-            is_cover[i][j] = true;
-            is_cover[i + 1][j] = true;
-            domino_available[domino]--;
-            find_solution.push_back({{i, j}, {i + 1, j}});
-            if (super_solve_recurse()) {
-                return true;
-            }
-            find_solution.pop_back();
-            domino_available[domino]++;
-            is_cover[i][j] = false;
-            is_cover[i + 1][j] = false;
-        }
-    }
-    
-    // Вліво
-    if (j > 0 && !is_cover[i][j - 1]) {
-        int value_2 = d_board.get_val(i, j - 1);
-        pair<int, int> domino = minmax(value_1, value_2);
-        if (domino_available[domino] > 0) {
-            cout << "Trying horizontal left at (" << i << "," << j << ") and (" << i << "," << j-1 << ")" << endl;
-            is_cover[i][j] = true;
-            is_cover[i][j - 1] = true;
-            domino_available[domino]--;
-            find_solution.push_back({{i, j}, {i, j - 1}});
-            if (super_solve_recurse()) {
-                return true;
-            }
-            find_solution.pop_back();
-            domino_available[domino]++;
-            is_cover[i][j] = false;
-            is_cover[i][j - 1] = false;
-        }
-    }
-    
-    // Вверх
-    if (i > 0 && !is_cover[i - 1][j]) {
-        int value_2 = d_board.get_val(i - 1, j);
-        pair<int, int> domino = minmax(value_1, value_2);
-        if (domino_available[domino] > 0) {
-            cout << "Trying vertical up at (" << i << "," << j << ") and (" << i-1 << "," << j << ")" << endl;
-            is_cover[i][j] = true;
-            is_cover[i - 1][j] = true;
-            domino_available[domino]--;
-            find_solution.push_back({{i, j}, {i - 1, j}});
-            if (super_solve_recurse()) {
-                return true;
-            }
-            find_solution.pop_back();
-            domino_available[domino]++;
-            is_cover[i][j] = false;
-            is_cover[i - 1][j] = false;
-        }
-    }
-    
-    return false;
-}
-
-bool dominosa_solve::place_all_dominoes_of_type(const pair<int, int>& domino_type) {//нововведення для розміщення всіх доміно певного типу
+bool dominosa_solve::placeall_dominoes(const pair<int, int>& domino_type) {//знаходимо всі можливі позиції для розміщення доміно
+    int value1 = domino_type.first;
+    int value2 = domino_type.second;
     int rows = d_board.get_r();
     int cols = d_board.get_c();
-    
-    for (int i = 0; i < rows; ++i) {
-        for (int j = 0; j < cols; ++j) {
-            if (is_cover[i][j]) continue;
-            if (j < cols - 1 && !is_cover[i][j+1]) {//
-                pair<int, int> current_domino = minmax(d_board.get_val(i, j), d_board.get_val(i, j+1));
-                if (current_domino == domino_type) {
-                    is_cover[i][j] = true;
-                    is_cover[i][j+1] = true;
-                    find_solution.push_back({{i, j}, {i, j+1}});
-                    cout << "Forced: Placed horizontal domino at (" << i << "," << j << ") and (" << i << "," << j+1 << ")" << endl;
-                }
-            }
-            
-            // Перевіряємо вертикальне доміно
-            if (i < rows - 1 && !is_cover[i+1][j]) {
-                pair<int, int> current_domino = minmax(d_board.get_val(i, j), d_board.get_val(i+1, j));
-                if (current_domino == domino_type) {
-                    is_cover[i][j] = true;
-                    is_cover[i+1][j] = true;
-                    find_solution.push_back({{i, j}, {i+1, j}});
-                    cout << "Forced: Placed vertical domino at (" << i << "," << j << ") and (" << i+1 << "," << j << ")" << endl;
+    vector<pair<pair<int, int>, pair<int, int>>> pos_place;
+
+    for (int i = 0; i < rows; ++i) {//перевіряємо горизонтальні доміно
+        for (int j = 0; j < cols - 1; ++j) {
+            if (!is_cover[i][j] && !is_cover[i][j+1]) {
+                int v1 = d_board.get_val(i, j);
+                int v2 = d_board.get_val(i, j+1);
+                if ((v1 == value1 && v2 == value2) || (v1 == value2 && v2 == value1)) {
+                    pos_place.push_back({{i, j}, {i, j+1}});
                 }
             }
         }
     }
-    
+    for (int i = 0; i < rows - 1; ++i) {// перевіряємо вертикальні доміно
+        for (int j = 0; j < cols; ++j) {
+            if (!is_cover[i][j] && !is_cover[i+1][j]) {
+                int v1 = d_board.get_val(i, j);
+                int v2 = d_board.get_val(i+1, j);
+                if ((v1 == value1 && v2 == value2) || (v1 == value2 && v2 == value1)) {
+                    pos_place.push_back({{i, j}, {i+1, j}});
+                }
+            }
+        }
+    }
+    if (pos_place.empty() && domino_available[domino_type] > 0) {//немає можливих розміщень і доміно все ще потрібно-розв'язок неможливий
+        return false;
+    }
+    for (const auto& placement : pos_place) { // pозміщуємо доміно
+        is_cover[placement.first.first][placement.first.second] = true;
+        is_cover[placement.second.first][placement.second.second] = true;
+        find_solution.push_back({
+            {placement.first.first, placement.first.second},
+            {placement.second.first, placement.second.second}
+        });
+        domino_available[domino_type]--;
+        if (domino_available[domino_type] == 0) {
+            break;
+        }
+    }
     return true;
+}
+bool dominosa_solve::preprocess_dominoes() {
+    int rows = d_board.get_r();
+    int cols = d_board.get_c();
+    bool made_progress = true;
+    while (made_progress) {//поки можливо встановити очевидні доміно
+        made_progress = false;
+        for (int i = 0; i < rows; ++i) {//для кожної непокритої клітинки
+            for (int j = 0; j < cols; ++j) {
+                if (is_cover[i][j]) continue;
+                int valid_move = 0;
+                pair<int, int> valid_posR = {-1, -1}; //для розміщення вправо
+                pair<int, int> valid_posD = {-1, -1}; //для розміщення вниз
+                pair<int, int> valid_posL = {-1, -1}; //для розміщення вліво
+                pair<int, int> valid_posU = {-1, -1}; //для розміщення вверх
+                int valid_dir = 0; // 1-вправо, 2-вниз, 3-вліво, 4-вверх
+                // Перевіряємо чотири напрямки
+                if (j < cols - 1 && !is_cover[i][j+1]) {//вправо
+                    pair<int, int> domino = minmax(d_board.get_val(i, j), d_board.get_val(i, j+1));
+                    if (domino_available.count(domino) && domino_available[domino] > 0) {
+                        valid_move++;
+                        valid_posR = {i, j+1};
+                        valid_dir = 1;
+                    }
+                }
+                if (i < rows - 1 && !is_cover[i+1][j]) { //вниз
+                    pair<int, int> domino = minmax(d_board.get_val(i, j), d_board.get_val(i+1, j));
+                    if (domino_available.count(domino) && domino_available[domino] > 0) {
+                        valid_move++;
+                        valid_posD = {i+1, j};
+                        if (valid_dir == 0) valid_dir = 2;
+                    }
+                }
+                if (j > 0 && !is_cover[i][j-1]) { //вліво
+                    pair<int, int> domino = minmax(d_board.get_val(i, j), d_board.get_val(i, j-1));
+                    if (domino_available.count(domino) && domino_available[domino] > 0) {
+                        valid_move++;
+                        valid_posL = {i, j-1};
+                        if (valid_dir == 0) valid_dir = 3;
+                    }
+                }
+                if (i > 0 && !is_cover[i-1][j]) {//вверх
+                    pair<int, int> domino = minmax(d_board.get_val(i, j), d_board.get_val(i-1, j));
+                    if (domino_available.count(domino) && domino_available[domino] > 0) {
+                        valid_move++;
+                        valid_posU = {i-1, j};
+                        if (valid_dir == 0) valid_dir = 4;
+                    }
+                }
+                if (valid_moves == 1) {
+                    made_progress = true;
+                    
+                    int value_1 = d_board.get_val(i, j);
+                    int value_2;
+                    pair<int, int> next_pos;
+                    
+                    if (valid_dir == 1) { //вправо
+                        next_pos = valid_posR;
+                        value_2 = d_board.get_val(next_pos.first, next_pos.second);
+                        is_cover[i][j] = true;
+                        is_cover[next_pos.first][next_pos.second] = true;
+                        find_solution.push_back({{i, j}, {next_pos.first, next_pos.second}});
+                    }
+                    else if (valid_dir == 2) { //вниз
+                        next_pos = valid_posD;
+                        value_2 = d_board.get_val(next_pos.first, next_pos.second);
+                        is_cover[i][j] = true;
+                        is_cover[next_pos.first][next_pos.second] = true;
+                        find_solution.push_back({{i, j}, {next_pos.first, next_pos.second}});
+                    }
+                    else if (valid_dir == 3) { //вліво
+                        next_pos = valid_posL;
+                        value_2 = d_board.get_val(next_pos.first, next_pos.second);
+                        is_cover[i][j] = true;
+                        is_cover[next_pos.first][next_pos.second] = true;
+                        find_solution.push_back({{i, j}, {next_pos.first, next_pos.second}});
+                    }
+                    else if (valid_dir == 4) { //вверх
+                        next_pos = valid_posU;
+                        value_2 = d_board.get_val(next_pos.first, next_pos.second);
+                        is_cover[i][j] = true;
+                        is_cover[next_pos.first][next_pos.second] = true;
+                        find_solution.push_back({{i, j}, {next_pos.first, next_pos.second}});
+                    }
+                    pair<int, int> domino = minmax(value_1, value_2);//кіль-сть достуаних доміно ми зменшуємо
+                    domino_available[domino]--;
+                    if (domino_available[domino] == 0) {//якщо домінуюча пара більше недоступна, спроба розмістити всі інші пари цього типу
+                        if (!placeall_dominoes(domino)) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return true; //обробка пройшла успішно
 }
 pair<int, int> dominosa_solve::grab_next_cell() {
     int best_row = -1, best_col = -1;
     int minimum_option = numeric_limits<int>::max();
-    
-    // Оптимізована версія - пріоритет клітинкам з меншими можливостями
-    for (int i = 0; i < d_board.get_r(); ++i) {
+
+    for (int i = 0; i < d_board.get_r(); ++i) {//пріоритет клітинкам з меншими можливостями
         for (int j = 0; j < d_board.get_c(); ++j) {
             if (!is_cover[i][j]) {
                 int option = 0;
                 int value_1 = d_board.get_val(i, j);
-                
-                // Перевіряємо можливі варіанти розміщення
-                if (j + 1 < d_board.get_c() && !is_cover[i][j + 1]) {
+                if (j + 1 < d_board.get_c() && !is_cover[i][j + 1]) { // я перевіряю всі можливі варіанти розміщення
                     pair<int, int> domino = minmax(value_1, d_board.get_val(i, j + 1));
                     if (domino_available.count(domino) && domino_available[domino] > 0) {
                         option++;
@@ -212,9 +213,7 @@ pair<int, int> dominosa_solve::grab_next_cell() {
                         option++;
                     }
                 }
-                
-                // Також перевіряємо можливі варіанти зліва та зверху
-                if (j > 0 && !is_cover[i][j - 1]) {
+                if (j > 0 && !is_cover[i][j - 1]) { //перевірка варіантів зліва та зверху
                     pair<int, int> domino = minmax(value_1, d_board.get_val(i, j - 1));
                     if (domino_available.count(domino) && domino_available[domino] > 0) {
                         option++;
@@ -226,10 +225,8 @@ pair<int, int> dominosa_solve::grab_next_cell() {
                         option++;
                     }
                 }
-                // Якщо у клітинки нема варіантів, але вона ще не покрита
-                if (option == 0) {
-                    // Перевіряємо, чи є ця клітинка єдиною непокритою
-                    bool is_only_uncovered = true;
+                if (option == 0) { //у клітинки нема варіантів, але вона ще не покрита
+                    bool is1_uncovered = true;//чи є ця клітинка єдиною непокритою?
                     for (int r = 0; r < d_board.get_r(); ++r) {
                         for (int c = 0; c < d_board.get_c(); ++c) {
                             if (!is_cover[r][c] && (r != i || c != j)) {
@@ -237,14 +234,12 @@ pair<int, int> dominosa_solve::grab_next_cell() {
                                 break;
                             }
                         }
-                        if (!is_only_uncovered) break;
+                        if (!is1_uncovered) break;
                     }
-                    if (is_only_uncovered) {
-                        // Якщо це єдина непокрита клітинка, то ми не можемо знайти розв'язок
-                        return {-2, -2};
+                    if (is1_uncovered) {
+                        return {-2, -2};//ми не можемо знайти розв'язок якщо це єдина непокрита клітинка
                     }
-                    // Іншому випадку, все одно обираємо цю клітинку, оскільки для неї потрібен спеціальний підхід
-                    return {i, j};
+                    return {i, j};//в іншому випадку вчеоно обираємо цю коітинку але з особилвим підходом
                 }
                 if (option < minimum_option) {
                     minimum_option = option;
@@ -254,76 +249,91 @@ pair<int, int> dominosa_solve::grab_next_cell() {
             }
         }
     }
-    // Якщо всі клітинки покриті
-    if (best_row == -1) {
+    if (best_row == -1) { //всі клітинки покриті
         return {-1, -1};
     }
     return {best_row, best_col};
 }
 
-bool dominosa_solve::super_solve_recurse() {//головоломку розвязуєм через рекурсію
+bool dominosa_solve::super_solve_recurse() {
     pair<int, int> next_cell = grab_next_cell();
     int i = next_cell.first;
     int j = next_cell.second;
-    if (i == -1) {//знайдене рігення
+    if (i == -1) {//розвязок знайдено
         cout << "All cells covered. Solution complete." << endl;
-        return true; // Всі клітинки покриті, розв'язок знайдено
+        return true;
     }
-    if (i == -2) { //якщо є клітинка без можл ходів, рішення стаеє неможливим
-        return false; // Неможливо розв'язати
+    if (i == -2) {//розвязорк не знайдено
+        cout << "Solution impossible - isolated uncovered cell." << endl;
+        return false;
     }
     
     int value_1 = d_board.get_val(i, j);
-    if (d_board.is_val(i, j + 1) && !is_cover[i][j + 1]) {
+    struct DominoDir {//перевіряємо всі чотири напрямки і сортуємо за пріоритетом
+        int direction; // 1-вправо, 2-вниз, 3-вліво, 4-вверх
+        int row2, col2; // коорд. другої клітинки доміно
+        pair<int, int> domino_type; // тип доміно ака пара значень
+    };
+    vector<DominoDirection> possible_dir;
+    
+    if (j + 1 < d_board.get_c() && !is_cover[i][j + 1]) {//це вправо
         int value_2 = d_board.get_val(i, j + 1);
         pair<int, int> domino = minmax(value_1, value_2);
-        if (domino_available[domino] > 0) { // для горизонтального домвно
-            cout << "Trying horizontal at (" << i << "," << j << ") and (" << i << "," << j+1 << ")" << endl;
-            is_cover[i][j] = true;
-            is_cover[i][j + 1] = true;
-            domino_available[domino]--; // Зменшуємо лічильник
-            find_solution.push_back({{i, j}, {i, j + 1}});
-            if (super_solve_recurse()) {//продовження розв'язання
-                return true;
-            }
-            cout << "Backtracking from horizontal at (" << i << "," << j << ") and (" << i << "," << j+1 << ")" << endl;
-            find_solution.pop_back();//якщо рекурсія не вдалась поточне розміщення скасовується
-            domino_available[domino]++; // Відновлюємо лічильник
-            is_cover[i][j] = false;
-            is_cover[i][j + 1] = false;
+        if (domino_available[domino] > 0) {
+            possible_dir.push_back({1, i, j+1, domino});
         }
     }
-    if (d_board.is_val(i + 1, j) && !is_cover[i + 1][j]) {
-        int value_2 = d_board.get_val(i + 1, j); 
+    if (i + 1 < d_board.get_r() && !is_cover[i + 1][j]) {//це вниз
+        int value_2 = d_board.get_val(i + 1, j);
         pair<int, int> domino = minmax(value_1, value_2);
-        if (domino_available[domino] > 0) { //для вертикального домвно
-            cout << "Trying vertical at (" << i << "," << j << ") and (" << i+1 << "," << j << ")" << endl;
-            is_cover[i][j] = true;
-            is_cover[i+ 1][j] = true;
-            domino_available[domino]--; // Зменшуємо лічильник
-            find_solution.push_back({{i, j}, {i + 1, j}});
-            if (super_solve_recurse()) {//продовження розв'язання
-                return true;
-            }
-            cout << "Backtracking from vertical at (" << i << "," << j << ") and (" << i+1 << "," << j << ")" << endl;
-            find_solution.pop_back();//якщо рекурсія не вдалась поточне розміщення скасовується
-            domino_available[domino]++; // Відновлюємо лічильник
-            is_cover[i][j] = false;
-            is_cover[i + 1][j] = false;
+        if (domino_available[domino] > 0) {
+            possible_dir.push_back({2, i+1, j, domino});
         }
     }
+    if (j > 0 && !is_cover[i][j - 1]) {//це вліво
+        int value_2 = d_board.get_val(i, j - 1);
+        pair<int, int> domino = minmax(value_1, value_2);
+        if (domino_available[domino] > 0) {
+            possible_dir.push_back({3, i, j-1, domino});
+        }
+    }
+    if (i > 0 && !is_cover[i - 1][j]) {//це вверх
+        int value_2 = d_board.get_val(i - 1, j);
+        pair<int, int> domino = minmax(value_1, value_2);
+        if (domino_available[domino] > 0) {
+            possible_dir.push_back({4, i-1, j, domino});
+        }
+    }
+    sort(possible_dir.begin(), possible_dir.end(), [&](const DominoDir& a, const DominoDir& b) {//сортування напрямків за кількістю доступних доміно для них, ще це можна назвати евристикою
+            return domino_available[a.domino_type] < domino_available[b.domino_type];
+        });
+    for (const auto& dir : possible_dir) { //перебираємо можливі напрямки у вже сротованому порядку
+        int row2 = dir.row2;
+        int col2 = dir.col2;
+        string dir_name;
+        is_cover[i][j] = true;
+        is_cover[row2][col2] = true;
+        domino_available[dir.domino_type]--;
+        find_solution.push_back({{i, j}, {row2, col2}});
+        
+        if (super_solve_recurse()) {
+            return true;
+        }
+        find_solution.pop_back();
+        domino_available[dir.domino_type]++;
+        is_cover[i][j] = false;
+        is_cover[row2][col2] = false;
+    }
+    
     return false;
 }
-
-bool dominosa_solve::solve() {//попередньо обробляємо дошку для розставлення зрозумілих доміно
+bool dominosa_solve::solve() {
     cout << "Starting preprocessing..." << endl;
     if (!preprocess_mandatory_dominoes()) {
         cout << "Preprocessing detected unsolvable board!" << endl;
         return false;
     }
-    
-    // Перевіряємо, чи всі клітинки вже покриті
-    bool all_covered = true;
+    bool all_covered = true;//перевірка чи всі клітинки покриті
     for (int i = 0; i < d_board.get_r(); ++i) {
         for (int j = 0; j < d_board.get_c(); ++j) {
             if (!is_cover[i][j]) {
@@ -333,58 +343,50 @@ bool dominosa_solve::solve() {//попередньо обробляємо дош
         }
         if (!all_covered) break;
     }
-    
     if (all_covered) {
         cout << "Board completely solved during preprocessing!" << endl;
         return true;
     }
-    
     cout << "Starting recursive solving..." << endl;
     return super_solve_recurse();
 }
-
-void dominosa_solve::show_solution() const {//це метод для виведення в консоль
-    int row = d_board.get_r();
-    int col = d_board.get_c();
-    vector<vector<bool>> horizontal_dominosa(row, vector<bool>(col - 1, false));//потрібно для розміщення горизонтальних та вертикальних доміно
-    vector<vector<bool>> vertical_dominosa(row - 1, vector<bool>(col, false));
-    
-    for (const auto& dom : find_solution) {// заповнення проміжних сіток на основі знайденого розв'язку
-        int row1 = dom.first.row;
-        int col1 = dom.first.col;
-        int row2 = dom.second.row;
-        int col2 = dom.second.col;
-        if (row1 == row2) {// горизонтальне доміно
-            horizontal_dominosa[row1][min(col1, col2)] = true;
-        } else {
-            vertical_dominosa[min(row1, row2)][col1] = true;
-        }
+void dominosa_solve::show_solution() const {
+    int rows = d_board.get_r();
+    int cols = d_board.get_c();
+    int cell_len = 0;
+    for (int i = 0; i < rows; ++i)
+        for (int j = 0; j < cols; ++j)
+            cell_len = max(cell_len, (int)to_string(d_board.get_val(i, j)).length());
+    vector<vector<bool>> horiz(rows, vector<bool>(cols - 1, false));//готуєм кордони доміно
+    vector<vector<bool>> vert(rows - 1, vector<bool>(cols, false));
+    for (const auto& dom : find_solution) {
+        auto [c1, c2] = dom;
+        int r1 = c1.row, c11 = c1.col;
+        int r2 = c2.row, c22 = c2.col;
+        if (r1 == r2) horiz[r1][min(c11, c22)] = true;
+        else vert[min(r1, r2)][c11] = true;
     }
-    
-    for (int a = 0; a < row; ++a) {// Використовуємо Unicode символи для красивішого відображення 
-        for (int b = 0; b < col; ++b) {// виводимо числа та горизонтальні зєднання
-            cout << " " << d_board.get_val(a, b) << " ";//для виводу числа в поточній клітинці з пробілами для вирівнювання
-            if (b < col - 1) {
-                if (horizontal_dominosa[a][b]) {
-                    cout << "═"; // Використовуємо Unicode символ для горизонт. лінії
-                } else {
-                    cout << " ";
-                }
-            }
+    cout << "+";//верхня рамочка
+    for (int j = 0; j < cols; ++j)
+        cout << string(cell_w + 2, '-') << "+";
+    cout << "\n";
+    for (int i = 0; i < rows; ++i) {//кожен рядок з кордонами
+        cout << "|";//рядки зі значенями
+        for (int j = 0; j < cols; ++j) {
+            string val = to_string(d_board.get_val(i, j));
+            int pad = cell_w - val.length();
+            cout << " " << val << string(pad + 1, ' ');
+            if (j < cols - 1) cout << (horiz[i][j] ? " " : "|");//вертикальна межа для пустих доміно
         }
-        cout << endl;
-        if (a < row - 1) {// виводимо вертикальні зднання
-            for (int b = 0; b < col; ++b) {
-                if (vertical_dominosa[a][b]) {
-                    cout << " ║ "; // Використовуємо Unicode символ для вертик. лінії
-                } else {
-                    cout << "   ";
-                }
-                if (b < col - 1) {
-                    cout << " ";
-                }
-            }
-            cout << endl;
+        cout << "|\n";
+        cout << "+";//ця штука розділяє рядки
+        for (int j = 0; j < cols; ++j) {
+            if (i < rows - 1 && vert[i][j])
+                cout << string(cell_w + 2, ' ');
+            else
+                cout << string(cell_w + 2, '-');
+            cout << "+";
         }
+        cout << "\n";
     }
 }
