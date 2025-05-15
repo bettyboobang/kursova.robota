@@ -11,7 +11,7 @@ using namespace std;
 const int NEIGHBOR_DIRECTIONS_COUNT = 4;
 
 class dominosa_solve : public dominosa::dominosa_interface {
-  board d_board; // <--- ВИПРАВЛЕНО: видалено зайву крапку
+  board d_board;
   map<pair<int, int>, int> domino_available; //пара (значення доміно), значення (кількість): 1 (якщо ще не розміщено), 0 (якщо розміщено)
   vector<pair<dominosa::coordinate, dominosa::coordinate>> find_solution; //а це для відстеження покритих кліт.поля (зберігає знайдені пари координат доміно)
   vector<vector<bool>> is_cover;
